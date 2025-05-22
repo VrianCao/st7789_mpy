@@ -1,0 +1,52 @@
+name: Update Module Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version number (e.g., 1.2.3)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update version in module
+        run: |
+          # Update version in st7789/__init__.py
+          if [ -f "st7789/__init__.py" ]; then
+            sed -i "s/__version__ = .*/__version__ = \"${{ github.event.inputs.version }}\"/" st7789/__init__.py
+          fi
+          
+          # Update version in st7789/st7789.c if it exists
+          if [ -f "st7789/st7789.c" ]; then
+            sed -i "s/ST7789_VERSION \".*\"/ST7789_VERSION \"${{ github.event.inputs.version }}\"/" st7789/st7789.c
+          fi
+          
+          # Create version.txt file
+          echo "${{ github.event.inputs.version }}" > version.txt
+          
+          # Show changes
+          git diff
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add st7789/__init__.py st7789/st7789.c version.txt
+          git commit -m "Bump version to ${{ github.event.inputs.version }}"
+          git tag -a "v${{ github.event.inputs.version }}" -m "Version ${{ github.event.inputs.version }}"
+          
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
