@@ -1,6 +1,8 @@
 
 # ST7789 Driver for MicroPython
 
+[![Build MicroPython ST7789 Module (All Targets)](https://github.com/VrianCao/st7789_mpy/actions/workflows/build.yml/badge.svg)](https://github.com/VrianCao/st7789_mpy/actions/workflows/build.yml)
+
 This driver is based on [devbis' st7789_mpy driver.](https://github.com/devbis/st7789_mpy)
 I modified the original driver for one of my projects to add:
 

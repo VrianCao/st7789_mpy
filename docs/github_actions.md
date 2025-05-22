@@ -1,6 +1,15 @@
-# Using GitHub Actions to Build ST7789 MicroPython Module
+# Using GitHub Actions with ST7789 MicroPython Module
 
-This document explains how to use the GitHub Actions workflow to automatically build the ST7789 MicroPython module for various target platforms.
+This document explains how to use the GitHub Actions workflows to automatically build and manage the ST7789 MicroPython module.
+
+## Available Workflows
+
+The repository includes the following GitHub Actions workflows:
+
+1. **Build Workflow** - Builds firmware for all supported targets
+2. **Version Update Workflow** - Updates the module version across all files
+
+For version management details, see [Version Management](version_management.md).
 
 ## Overview
 
