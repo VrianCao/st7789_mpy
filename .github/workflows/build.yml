@@ -1,0 +1,291 @@
+name: Build MicroPython ST7789 Module (All Targets)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+  # Only run this comprehensive workflow on tags and manual triggers
+  # The esp32.yml workflow handles regular pushes for ESP32 targets
+
+jobs:
+  build-esp32-targets:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.4
+    env:
+      MICROPYTHON_VERSION: v1.25.0
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [
+          "GENERIC-7789",
+          "GENERIC_SPIRAM-7789",
+          "GENERIC_C3",
+          "GENERIC_C3_USB",
+          "GENERIC_S2",
+          "GENERIC_S3_7789",
+          "GENERIC_S3_SPIRAM",
+          "GENERIC_S3_SPIRAM_OCT",
+          "LOLIN_S2_MINI",
+          "M5CORE",
+          "M5CORE2",
+          "T-DISPLAY-ESP32",
+          "T-DONGLE-S3",
+          "TWATCH-2020",
+          "ESP32_BOX_LITE"
+        ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          path: st7789_mpy
+
+      - name: Checkout MicroPython
+        uses: actions/checkout@v3
+        with:
+          repository: micropython/micropython
+          path: micropython
+          ref: ${{ env.MICROPYTHON_VERSION }}
+          submodules: true
+
+      - name: Setup build environment
+        run: |
+          . $IDF_PATH/export.sh
+          cd micropython
+          make -C mpy-cross
+
+      - name: Build firmware for ${{ matrix.target }}
+        run: |
+          . $IDF_PATH/export.sh
+          cd micropython/ports/esp32
+          
+          # Create modules directory if it doesn't exist
+          mkdir -p modules
+          
+          # Copy some common font files as frozen modules (optional)
+          cp -f ../../../st7789_mpy/fonts/bitmap/vga1_16x16.py modules/ || true
+          cp -f ../../../st7789_mpy/fonts/bitmap/vga2_8x8.py modules/ || true
+          
+          # Build the firmware with the st7789 module
+          make USER_C_MODULES=../../../../st7789_mpy/micropython.cmake BOARD=${{ matrix.target }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}-firmware
+          path: |
+            micropython/ports/esp32/build-${{ matrix.target }}/firmware.bin
+            micropython/ports/esp32/build-${{ matrix.target }}/firmware.elf
+            micropython/ports/esp32/build-${{ matrix.target }}/firmware.map
+          retention-days: 7
+
+  build-rp2-targets:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.4
+    env:
+      MICROPYTHON_VERSION: v1.25.0
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [
+          "RP2",
+          "RP2W",
+          "T-DISPLAY-RP2040"
+        ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          path: st7789_mpy
+
+      - name: Checkout MicroPython
+        uses: actions/checkout@v3
+        with:
+          repository: micropython/micropython
+          path: micropython
+          ref: ${{ env.MICROPYTHON_VERSION }}
+          submodules: true
+
+      - name: Install RP2 build dependencies
+        run: |
+          apt-get update
+          apt-get install -y cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+
+      - name: Setup build environment
+        run: |
+          cd micropython
+          make -C mpy-cross
+
+      - name: Build firmware for ${{ matrix.target }}
+        run: |
+          cd micropython/ports/rp2
+          
+          # Create modules directory if it doesn't exist
+          mkdir -p modules
+          
+          # Copy some common font files as frozen modules (optional)
+          cp -f ../../../st7789_mpy/fonts/bitmap/vga1_16x16.py modules/ || true
+          cp -f ../../../st7789_mpy/fonts/bitmap/vga2_8x8.py modules/ || true
+          
+          # Build the firmware with the st7789 module
+          make USER_C_MODULES=../../../st7789_mpy/micropython.cmake BOARD=${{ matrix.target }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}-firmware
+          path: |
+            micropython/ports/rp2/build-${{ matrix.target }}/firmware.uf2
+            micropython/ports/rp2/build-${{ matrix.target }}/firmware.elf
+            micropython/ports/rp2/build-${{ matrix.target }}/firmware.map
+          retention-days: 7
+
+  build-stm32-targets:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.4
+    env:
+      MICROPYTHON_VERSION: v1.25.0
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [
+          "PYBV11"
+        ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          path: st7789_mpy
+
+      - name: Checkout MicroPython
+        uses: actions/checkout@v3
+        with:
+          repository: micropython/micropython
+          path: micropython
+          ref: ${{ env.MICROPYTHON_VERSION }}
+          submodules: true
+
+      - name: Install STM32 build dependencies
+        run: |
+          apt-get update
+          apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+
+      - name: Setup build environment
+        run: |
+          cd micropython
+          make -C mpy-cross
+
+      - name: Build firmware for ${{ matrix.target }}
+        run: |
+          cd micropython/ports/stm32
+          
+          # Create modules directory if it doesn't exist
+          mkdir -p modules
+          
+          # Copy some common font files as frozen modules (optional)
+          cp -f ../../../st7789_mpy/fonts/bitmap/vga1_16x16.py modules/ || true
+          cp -f ../../../st7789_mpy/fonts/bitmap/vga2_8x8.py modules/ || true
+          
+          # Build the firmware with the st7789 module
+          make USER_C_MODULES=../../../st7789_mpy/micropython.cmake BOARD=${{ matrix.target }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}-firmware
+          path: |
+            micropython/ports/stm32/build-${{ matrix.target }}/firmware.dfu
+            micropython/ports/stm32/build-${{ matrix.target }}/firmware.elf
+            micropython/ports/stm32/build-${{ matrix.target }}/firmware.map
+          retention-days: 7
+
+  create-release:
+    needs: [build-esp32-targets, build-rp2-targets, build-stm32-targets]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release_assets
+          
+          # Create directories for each target
+          for target_dir in artifacts/*-firmware; do
+            target=$(basename $target_dir -firmware)
+            mkdir -p release_assets/$target
+            
+            # Copy firmware files to target directory
+            cp -r $target_dir/* release_assets/$target/
+            
+            # Create a README file for each target
+            echo "# $target Firmware" > release_assets/$target/README.md
+            echo "Built from $(git rev-parse --short HEAD)" >> release_assets/$target/README.md
+            echo "Built on $(date)" >> release_assets/$target/README.md
+          done
+          
+          # Create a zip file for each target
+          cd release_assets
+          for target in */; do
+            target=${target%/}
+            zip -r $target.zip $target
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release_assets/*.zip
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-all-in-one:
+    needs: [build-esp32-targets, build-rp2-targets, build-stm32-targets]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create all-in-one firmware package
+        run: |
+          mkdir -p all_firmware
+          
+          # Copy all firmware files to a single directory
+          for target_dir in artifacts/*-firmware; do
+            target=$(basename $target_dir -firmware)
+            mkdir -p all_firmware/$target
+            cp -r $target_dir/* all_firmware/$target/
+          done
+          
+          # Create a README file
+          echo "# ST7789 MicroPython Module Firmware" > all_firmware/README.md
+          echo "Built on $(date)" >> all_firmware/README.md
+          echo "## Targets" >> all_firmware/README.md
+          for target in all_firmware/*/; do
+            target=${target%/}
+            target=$(basename $target)
+            echo "- $target" >> all_firmware/README.md
+          done
+          
+          # Create a zip file
+          cd all_firmware
+          zip -r ../st7789_mpy_all_firmware.zip *
+
+      - name: Upload all-in-one firmware artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-firmware-package
+          path: st7789_mpy_all_firmware.zip
+          retention-days: 7
