@@ -61,27 +61,24 @@ After the workflow completes, you can:
 
 The workflow can be triggered in two ways:
 
-1. **Automatically on tag**: When you create a tag starting with `v` (e.g., `v1.0.0`)
+1. **Automatically on commit**: When you push to the `main` or `master` branch
 2. **Manually**: Using the "Run workflow" button in the GitHub Actions UI
 
-Note: Regular pushes to the repository are handled by the `esp32.yml` workflow, which builds only ESP32 targets.
+Note: This workflow will run alongside the `esp32.yml` workflow, providing builds for all targets.
 
 ## Creating a Release
 
-To create a release with all firmware files:
+A release is automatically created whenever the workflow runs:
 
-1. Create and push a tag starting with `v`:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
+1. The workflow will automatically:
+   - Build firmware for all targets
+   - Create a draft release on GitHub with a tag in the format `build-YYYY-MM-DD-COMMIT_HASH`
+   - Upload firmware packages as release assets
 
-2. The workflow will automatically:
-   - Build all firmware targets
-   - Create a draft GitHub release
-   - Attach firmware packages to the release
-
-3. Review the draft release on GitHub and publish it when ready
+2. Go to the GitHub repository's "Releases" page
+3. Find the draft release and review it
+4. Edit the release description if needed
+5. Publish the release when ready
 
 ## Customizing the Build
 

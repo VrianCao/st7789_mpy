@@ -2,11 +2,11 @@ name: Build MicroPython ST7789 Module (All Targets)
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - 'master'
+      - 'main'
   workflow_dispatch:
-  # Only run this comprehensive workflow on tags and manual triggers
-  # The esp32.yml workflow handles regular pushes for ESP32 targets
+  # Run this comprehensive workflow on commits to main branches and manual triggers
 
 jobs:
   build-esp32-targets:
@@ -207,9 +207,11 @@ jobs:
 
   create-release:
     needs: [build-esp32-targets, build-rp2-targets, build-stm32-targets]
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       - name: Download all artifacts
         uses: actions/download-artifact@v3
         with:
@@ -239,13 +241,19 @@ jobs:
             target=${target%/}
             zip -r $target.zip $target
           done
-
+          
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: release_assets/*.zip
           draft: true
           generate_release_notes: true
+          tag_name: build-${{ steps.date.outputs.date }}-${{ github.sha }}
+          name: Automated Build ${{ steps.date.outputs.date }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

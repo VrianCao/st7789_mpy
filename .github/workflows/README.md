@@ -9,10 +9,10 @@ The `build.yml` workflow automates the process of building MicroPython firmware 
 ### Triggers
 
 The workflow runs on:
-- Any tag starting with `v` (e.g., `v1.0.0`)
+- Pushes to `main` or `master` branches
 - Manual trigger via GitHub Actions UI
 
-Note: Regular pushes to the repository are handled by the `esp32.yml` workflow, which builds only ESP32 targets.
+Note: This workflow will run alongside the `esp32.yml` workflow, providing builds for all targets.
 
 ### Jobs
 
@@ -30,8 +30,8 @@ The workflow consists of the following jobs:
    - Currently only builds for PYBV11 (Pyboard v1.1)
 
 4. **create-release**: Creates a GitHub release with firmware packages
-   - Only runs when a tag is pushed
    - Creates a draft release with separate ZIP files for each target
+   - Automatically generates a tag with date and commit hash
    - Includes README files with build information
 
 5. **build-all-in-one**: Creates a combined firmware package
@@ -56,11 +56,7 @@ To customize the build process:
 
 To use this workflow:
 
-1. Create a tag (e.g., `v1.0.0`) to trigger a build and release:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
+1. Push to the `main` or `master` branch to trigger a build and release
 2. Use the "Run workflow" button in the GitHub Actions UI for manual builds
 
 ## Troubleshooting
